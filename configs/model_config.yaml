@@ -1,0 +1,113 @@
+# LLM 配置
+
+llm_models:
+  default: "doubao-1-6-flash"
+
+  planner: "deepseek-v3.2"        # 任务规划
+  tool: "deepseek-v3.2"           # MCP 任务执行 (mcp_agent)
+#  sql: "doubao-seed-code"         # SQL 生成 (sql_agent)
+  rag: "doubao-1-6-flash"         # RAG 循环检索 (rag_agent)
+  summarizer: "doubao-1-6-flash"        # 最终统筹生成 (synthesizer)
+  rag_retrieve: "qwen-turbo"      # RAG内部读取 (rag_nodes)
+
+  grader: "doubao-1-6-flash"      # CRAG 判官 (grader_node)
+  reranker: "rerank"              # 知识库精选重排 (handler)
+
+  classifier: "doubao-1-6-flash"  # 文档入库分类 (ingestion)
+  extractor: "doubao-1-6-flash"   # 元数据批量提取 (components)
+  memory: "deepseek-v3.2"         # Mem0 事实提炼 (memory)
+  image: "seedream-image"         # 图片理解 (components)
+
+  providers:
+    doubao-1-8:
+      model_id: "doubao-seed-1-8-251228"
+      base_url: "https://ark.cn-beijing.volces.com/api/v3"
+      max_tokens: 2048
+    glm-4-7:
+      model_id: "glm-4-7-251222"
+      base_url: "https://ark.cn-beijing.volces.com/api/v3"
+    doubao-1-6-flash:
+      model_id: "doubao-seed-1-6-flash-250828"
+      base_url: "https://ark.cn-beijing.volces.com/api/v3"
+    doubao-seed-code:
+      model_id: "doubao-seed-code-preview-251028"
+      base_url: "https://ark.cn-beijing.volces.com/api/v3"
+    deepseek-v3.2:
+      model_id: "deepseek-v3-2-251201"
+      base_url: "https://ark.cn-beijing.volces.com/api/v3"
+    qwen:
+      model_id: "qwen-long-latest"
+      base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    qwen-turbo:
+      model_id: "qwen-turbo-latest"
+      base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    rerank:
+      model_id: "qwen3-rerank"
+      base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    seedream-image:
+      model_id: "ep-20260401134615-5qpj8"
+      base_url: "https://ark.cn-beijing.volces.com/api/v3"
+
+# Embedding 向量模型配置
+embedding_models:
+  default: "qwen"
+  providers:
+    qwen:
+      model_id: "text-embedding-v3"
+      batch_size: 10
+      base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+
+# 数据库配置
+database:
+  db_name: "emei_master"
+  host: "127.0.0.1"
+  port: 3306
+  vector_db:
+    persist_path: "./storage/chroma_db"  # 数据库文件存放位置
+    collection_name: "emei_knowledge_v1" # 相当于 MySQL 的表名
+
+# 知识库灌装加工配置
+ingestion:
+  num_workers: 4
+  splitter:
+    # 可选值: recursive(递归字符切分), markdown(按 Markdown 结构切分), semantic(语义切分), hierarchical(层级兜底)
+    type: "markdown"
+    chunk_size: 512       # 每个分片的最大长度
+    chunk_overlap: 50     # 分片间的重叠长度
+    # 语义切分器的特殊参数
+    semantic:
+      buffer_size: 1
+      breakpoint_percentile_threshold: 95
+
+  extractors:
+    enable_title: true    # 是否自动提取标题
+    title_nodes: 5        # 提取标题时参考前多少个节点
+
+    enable_summary: true  # 是否自动生成摘要
+
+    enable_entity: true   # 实体/关键字提取
+    entity_nodes: 5
+
+    enable_qa: true       # QA 生成
+    qa_nodes: 5
+
+# 第三方服务配置 (MCP Tools)
+tools:
+  amap:
+    base_url: "https://restapi.amap.com/v3"
+  qweather:
+    base_url: "https://m42vhfja65.re.qweatherapi.com"
+  data_cleaning:
+    model_id: "doubao-seed-1-6-flash-250828"
+    base_url: "https://ark.cn-beijing.volces.com/api/v3"
+    source_dir: "./data/source"
+    output_dir: "./data"
+    progress_file: "./process_progress.json"
+    max_workers: 15
+    chunk_separator: "---------------"
+
+
+
+
+
+

@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.py,cover
+.venv/
+venv/
+env/
+.envrc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+.ipynb_checkpoints/
+
+# Environment Variables
+.env
+.env.*
+*.env
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+.python-version
+.DS_Store
+Thumbs.db
+
+# Project Specific
+logs/
+storage/
+data/
+*.log
+*.sqlite
+*.sqlite3
+*.db
+process_progress.json
+
+# Build/Dist
+dist/
+build/
+*.egg-info/
+pip-wheel-metadata/
+
+# Packaging
+*.whl
+
+# Tests
+tests/
+
+
+py_script/
