@@ -20,7 +20,6 @@ htmlcov/
 
 # Environment Variables
 .env
-.env.*
 *.env
 
 # IDEs
