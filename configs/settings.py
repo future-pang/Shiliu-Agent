@@ -157,6 +157,24 @@ class Settings(BaseSettings):
         )
         return self._get_llm_config(selected)
 
+    @property
+    def pdf_vision_llm(self):
+        """
+        PDF 图表/图片视觉理解专用多模态模型。
+        在 model_config.yaml 中配置示例：
+          llm_models:
+            pdf_vision: qwen_vl   # 指向 providers 下已配置的多模态模型 key
+
+        若未配置，返回 None，vision_extractor 将优雅降级为占位描述。
+        """
+        selected = self._config["llm_models"].get("pdf_vision")
+        if not selected:
+            return None
+        try:
+            return self._get_llm_config(selected)
+        except (KeyError, Exception):
+            return None
+
     # ==========================================
     # 其他配置层
     # ==========================================

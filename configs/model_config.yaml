@@ -7,7 +7,7 @@ llm_models:
   tool: "deepseek-v3.2"           # MCP 任务执行 (mcp_agent)
 #  sql: "doubao-seed-code"         # SQL 生成 (sql_agent)
   rag: "doubao-1-6-flash"         # RAG 循环检索 (rag_agent)
-  summarizer: "doubao-1-6-flash"        # 最终统筹生成 (synthesizer)
+  summarizer: "doubao-1-6-flash"  # 最终统筹生成 (synthesizer)
   rag_retrieve: "qwen-turbo"      # RAG内部读取 (rag_nodes)
 
   grader: "doubao-1-6-flash"      # CRAG 判官 (grader_node)
@@ -17,6 +17,19 @@ llm_models:
   extractor: "doubao-1-6-flash"   # 元数据批量提取 (components)
   memory: "deepseek-v3.2"         # Mem0 事实提炼 (memory)
   image: "seedream-image"         # 图片理解 (components)
+
+  # ----------------------------------------------------------------
+  # PDF 图表/图片视觉理解专用多模态模型
+  # 配置方法：在下方 providers 里添加支持 vision 的模型，然后取消注释
+  # 示例（Qwen-VL）：
+  #   providers:
+  #     qwen-vl:
+  #       model_id: "qwen-vl-max-latest"
+  #       base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+  # 然后启用：
+  # pdf_vision: "qwen-vl"
+  # ----------------------------------------------------------------
+  # pdf_vision: "qwen-vl"          # 暂未配置，vision_extractor 将生成占位描述
 
   providers:
     doubao-1-8:
@@ -63,10 +76,11 @@ database:
   host: "127.0.0.1"
   port: 3306
   vector_db:
-    persist_path: "./storage/chroma_db"  # 数据库文件存放位置
+    persist_path: "./storage/chroma_db"  # 数据库文件存放位置（md/word RAG 专用）
     collection_name: "emei_knowledge_v1" # 相当于 MySQL 的表名
+  # PDF RAG 专用：pdf_rag_collection 存储在 ./storage/pdf_chroma_db（代码硬编码，无需修改）
 
-# 知识库灌装加工配置
+# 知识库灌装加工配置（md/word 专用，PDF 有独立 pipeline）
 ingestion:
   num_workers: 4
   splitter:
@@ -105,9 +119,3 @@ tools:
     progress_file: "./process_progress.json"
     max_workers: 15
     chunk_separator: "---------------"
-
-
-
-
-
-
