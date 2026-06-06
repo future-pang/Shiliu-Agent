@@ -2,6 +2,7 @@ from langchain_core.tools import tool
 
 from server.knowledge_base.handler import kb_handler
 
+
 # =====================================================================
 # 预览搜索 (带已读过滤与高光透传)
 # =====================================================================
@@ -124,3 +125,88 @@ def maps_context(entity: str) -> str:
         return f"图谱跃迁异常: {e}"
 
 RAG_TOOLS = [preview_docs, read_chunk]
+
+
+# =====================================================================
+# 增强版工具：smart_search（接入 Query Router，自动改写 + 多路检索）
+# =====================================================================
+
+@tool
+async def smart_search(
+    query: str,
+    query_type: str = "mixed",
+    force_strategy: str = "",
+) -> str:
+    """
+    【智能检索 — 带自动 Query 改写】
+    比 preview_docs 更强大的检索工具，自动识别查询类型并选择最优改写策略：
+
+    - 简单问题    → 直接规范化后单路检索
+    - 事实/条款   → HyDE（假设答案嵌入）+ 原始 query 双路
+    - 多角度问题  → 生成 3 个不同措辞变体，4 路并行 + RRF 合并
+    - 复杂/比较   → 拆解为子问题，各自检索后合并
+    - 背景/框架   → 宏观化 + HyDE + 原始 query，3 路检索
+
+    参数说明：
+    - query:          用户原始问题（不需要手动改写，系统自动处理）
+    - query_type:     "micro"（细节）/ "macro"（宏观）/ "mixed"（默认）
+    - force_strategy: 可选，强制指定策略（simple/factual/multi_angle/complex/background）
+
+    返回：多路检索合并后的最相关片段列表（含 Node_ID、标题、摘要）。
+    调用此工具后，必须用 read_chunk 读取正文。
+    """
+    print(f"\n   [Tool] smart_search: '{query}' (type={query_type})")
+
+    from server.knowledge_base.query_router import get_router
+
+    router = get_router(auto_classify=True)
+    force = force_strategy if force_strategy in {
+        "simple", "factual", "multi_angle", "complex", "background"
+    } else None
+
+    try:
+        merged_nodes, rewrite_result, detected_type = await router.route_and_retrieve(
+            query=query,
+            top_k=12,
+            query_type=query_type,
+            force_strategy=force,
+        )
+    except Exception as e:
+        return f"智能检索失败: {e}，请改用 preview_docs 工具。"
+
+    if not merged_nodes:
+        return "未找到相关文档，请更换提示词。"
+
+    # 构建返回结果（格式与 preview_docs 一致）
+    results = []
+    for i, node in enumerate(merged_nodes[:6]):
+        metadata = node.node.metadata
+        title = metadata.get("document_title", "未知文献")
+        summary = metadata.get("section_summary", metadata.get("summary", "无摘要"))
+
+        bubbled = metadata.get("bubbled_snippets", "")
+        snippet_text = f"\n{bubbled}" if bubbled else ""
+
+        results.append(
+            f"--- 结果 {i + 1} ---\n"
+            f"Node_ID: {node.node_id}\n"
+            f"标题: {title}\n"
+            f"摘要: {summary}{snippet_text}\n"
+        )
+
+    strategy_info = (
+        f"\n【检索策略】自动识别类型: {detected_type} | "
+        f"实际策略: {rewrite_result.strategy} | "
+        f"规范化: '{rewrite_result.original_query}' → '{rewrite_result.primary_query}'"
+    )
+
+    threat_prompt = (
+        "\n\n【系统强制指令】以上仅为摘要，必须选择至少 2-3 个相关 Node_ID "
+        "并立刻调用 read_chunk 工具获取完整正文后再回答！"
+    )
+
+    return "\n".join(results) + strategy_info + threat_prompt
+
+
+# 增强版工具集（包含 smart_search）
+RAG_TOOLS_ENHANCED = [smart_search, read_chunk]
