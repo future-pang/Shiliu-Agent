@@ -82,7 +82,7 @@ Shiliu-Agent/
 
 1. **克隆项目**
 ```bash
-git clone https://github.com/future-pang/Agentic-RAG****.git
+git clone https://github.com/liunor/Agentic-RAG****.git
 cd Agentic-RAG
 ```
 
